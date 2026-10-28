@@ -1,0 +1,473 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="claude:viewport-fit-sides" content="cover">
+<title>Descendiente de Gradiente - 01 - ESP | Prof. L. A. Muñoz</title>
+<style>
+:root{
+  --bg:#f5f4ef; --fg:#1c1e23; --muted:#6a6e78; --panel:#ffffff; --line:#e2dfd6;
+  --accent:#2b62d9; --hi:#fde9a6; --hi-fg:#1c1e23; --ok:#1d8a5a; --warn:#c2410c;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#101217; --fg:#e7e8ec; --muted:#9097a3; --panel:#181b22; --line:#2a2e38;
+    --accent:#7aa5ff; --hi:#3b3519; --hi-fg:#fff1c2; --ok:#4cc28a; --warn:#ff9d61;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#101217; --fg:#e7e8ec; --muted:#9097a3; --panel:#181b22; --line:#2a2e38;
+  --accent:#7aa5ff; --hi:#3b3519; --hi-fg:#fff1c2; --ok:#4cc28a; --warn:#ff9d61;
+  color-scheme: dark;
+}
+*{box-sizing:border-box}
+body{
+  margin:0; background:var(--bg); color:var(--fg);
+  font:14px/1.55 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  padding-left:max(16px,env(safe-area-inset-left,0px));
+  padding-right:max(16px,env(safe-area-inset-right,0px));
+  padding-block:20px 32px;
+}
+h1{font-size:22px;margin:0 0 4px;letter-spacing:-.01em;text-wrap:balance}
+.lead{color:var(--muted);margin:0 0 14px;max-width:70ch}
+.formula{
+  font-family:ui-serif,Georgia,serif; font-size:15px;
+  background:var(--panel); border:1px solid var(--line); border-radius:10px;
+  padding:10px 14px; margin-bottom:16px; overflow-x:auto;
+}
+.grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.5fr);gap:16px;align-items:start}
+@media (max-width:900px){.grid{grid-template-columns:minmax(0,1fr)}}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px;min-width:0}
+.label{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:0 0 8px}
+.code{font:13px/1.75 ui-monospace,Menlo,Consolas,monospace;overflow-x:auto;margin:0}
+.ln{display:block;padding:2px 8px;border-radius:5px;white-space:pre;transition:background .2s,color .2s}
+.ln.on{background:var(--hi);color:var(--hi-fg);box-shadow:inset 3px 0 0 var(--accent)}
+.n{display:inline-block;width:2ch;text-align:right;margin-right:14px;color:var(--muted);user-select:none}
+.explain{margin:12px 0 0;min-height:6.5em;font-size:14px}
+.controls{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:12px}
+.btn{
+  font:inherit; color:var(--fg); background:var(--panel);
+  border:1px solid var(--line); border-radius:8px;
+  padding:7px 12px; min-height:36px; cursor:pointer;
+}
+.btn:hover{border-color:var(--accent)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.btn:disabled{opacity:.45;cursor:default}
+input[type=range]{flex:1 1 160px;min-width:0;accent-color:var(--accent)}
+.counter{font-variant-numeric:tabular-nums;color:var(--muted);white-space:nowrap}
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12px;color:var(--muted);margin:8px 0 0}
+.legend i{display:inline-block;width:18px;height:0;border-top:3px solid;vertical-align:middle;margin-right:6px}
+.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:12px}
+@media (max-width:560px){.stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.stat{border-left:2px solid var(--line);padding-left:10px;min-width:0}
+.stat.hot{border-color:var(--accent)}
+.stat b{display:block;font-size:12px;font-weight:500;color:var(--muted)}
+.stat span{font-size:17px;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.stat.ok span{color:var(--ok)}
+.viz{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+@media (max-width:620px){.viz{grid-template-columns:minmax(0,1fr)}}
+.wide{grid-column:1 / -1}
+.panel{min-width:0}
+.cap{font-size:12px;color:var(--muted);margin:0 0 6px}
+.cap b{color:var(--fg);font-weight:600}
+canvas{width:100%;display:block}
+.cA{height:300px}
+.cB{height:190px}
+.cD{height:150px}
+.brow{display:grid;grid-template-columns:5.5em minmax(0,1fr) 5.5em;align-items:center;gap:8px;margin:7px 0}
+.bl{font-variant-numeric:tabular-nums;color:var(--muted);font-size:13px}
+.bv{font-variant-numeric:tabular-nums;text-align:right;font-size:13px}
+.track{position:relative;height:12px;background:var(--line);border-radius:6px}
+.zero{position:absolute;left:50%;top:-3px;bottom:-3px;width:1px;background:var(--muted)}
+.fill{position:absolute;top:0;bottom:0;border-radius:6px}
+.scale{font-size:12px;color:var(--muted);margin:2px 0 8px}
+.calc{font-variant-numeric:tabular-nums;font-size:13px;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px 10px;margin-top:10px;overflow-x:auto}
+.brand-header{margin-bottom:22px}.brand-logos{display:flex;align-items:center;gap:24px;flex-wrap:wrap;background:#fff;border-radius:12px;padding:14px 20px;margin-bottom:20px}.brand-logos img{object-fit:contain;max-width:29%;height:62px}.brand-logos img:nth-child(2){max-width:37%}.eyebrow{color:var(--accent);letter-spacing:.12em;font-size:11px;font-weight:700}.byline{font-size:15px;color:var(--muted);margin:4px 0 14px}@media(max-width:640px){.brand-logos{gap:12px}.brand-logos img{max-width:45%;height:42px}.brand-logos img:nth-child(2){max-width:100%;height:54px}}</style>
+</head>
+<body>
+<header class="brand-header"><div class="brand-logos"><img src="assets/tec-logo.png" alt="Tecnológico de Monterrey"><img src="assets/robotics-computing.png" alt="Robotics Computing Lab"><img src="assets/nvidia-logo.png" alt="NVIDIA"></div><p class="eyebrow">ROBOTICS COMPUTING LAB · TEACHING</p><h1>Descendiente de Gradiente - 01 - ESP</h1><p class="byline">Prof. L. A. Muñoz · Tecnológico de Monterrey</p></header>
+<p class="lead">Minimizamos f(x) = (x₁ − 2)² + (x₂ + 1)². Avanza con ← → o con los botones. Cada paso muestra qué calcula el gradiente, en qué dirección lo usa el algoritmo y cuánto se mueve el punto.</p>
+<div class="formula">f(x) = (x₁ − 2)² + (x₂ + 1)² &nbsp;·&nbsp; ∇f(x) = (2(x₁ − 2), 2(x₂ + 1)) &nbsp;·&nbsp; x₀ = (0, 0) &nbsp;·&nbsp; α = 0.1</div>
+
+<div class="grid">
+  <section class="card">
+    <p class="label">Código</p>
+    <pre class="code" id="code"></pre>
+    <p class="explain" id="explain" aria-live="polite"></p>
+    <div class="controls">
+      <button class="btn" id="prev" aria-label="Paso anterior">← Anterior</button>
+      <button class="btn primary" id="next" aria-label="Paso siguiente">Siguiente →</button>
+      <button class="btn" id="play">Reproducir</button>
+      <button class="btn" id="reset">Reiniciar</button>
+    </div>
+    <div class="controls">
+      <input type="range" id="slider" min="0" max="0" value="0" aria-label="Posición en el algoritmo">
+      <span class="counter" id="counter"></span>
+    </div>
+    <div class="calc" id="calc"></div>
+  </section>
+
+  <section class="card">
+    <p class="label">Estado y gradiente</p>
+    <div class="stats" id="stats"></div>
+    <div class="viz">
+      <div class="panel wide">
+        <p class="cap"><b>Mapa de la función.</b> Cada flecha muestra hacia dónde <em>baja</em> f en ese punto (−∇f).</p>
+        <canvas class="cA" id="cA" role="img" aria-label="Mapa de curvas de nivel con campo de gradientes"></canvas>
+        <div class="legend">
+          <span><i style="border-color:var(--warn)"></i>∇f: hacia donde sube f</span>
+          <span><i style="border-color:var(--muted);border-top-style:dashed"></i>−∇f: hacia donde baja f</span>
+          <span><i style="border-color:var(--accent)"></i>Paso real Δx = −α·∇f</span>
+        </div>
+      </div>
+
+      <div class="panel">
+        <p class="cap"><b>Corte en x₂ fijo.</b> La pendiente de la tangente es g₁.</p>
+        <canvas class="cB" id="cB" role="img" aria-label="Corte de f con la tangente"></canvas>
+      </div>
+
+      <div class="panel">
+        <p class="cap"><b>Componentes del gradiente y del paso.</b></p>
+        <div id="bars"></div>
+        <p class="scale" id="barsScale"></p>
+      </div>
+
+      <div class="panel wide">
+        <p class="cap"><b>Valor de la función.</b> f(xₖ) en escala log₁₀.</p>
+        <canvas class="cD" id="cD" role="img" aria-label="Función objetivo en escala logarítmica"></canvas>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script>
+/* ---------- Problema y ejecución ---------- */
+const PASO = 0.1, TOL = 1e-8, MAX = 1000;
+const fx = x => (x[0]-2)**2 + (x[1]+1)**2;
+const gr = x => [2*(x[0]-2), 2*(x[1]+1)];
+
+const recs = [];
+let x = [0, 0];
+for (let k = 0; k < MAX; k++) {
+  const g = gr(x), gn = Math.hypot(g[0], g[1]), last = gn < TOL;
+  recs.push({ k, x: [x[0], x[1]], g, gn, f: fx(x), last });
+  if (last) break;
+  x = [x[0] - PASO*g[0], x[1] - PASO*g[1]];
+}
+const N = recs.length - 1;
+
+/* ---------- Código ---------- */
+const CODE = [
+  "def f(x):    return (x[0]-2)**2 + (x[1]+1)**2",
+  "def grad(x): return [2*(x[0]-2), 2*(x[1]+1)]",
+  "x = [0.0, 0.0]; paso = 0.1; tol = 1e-8",
+  "for k in range(max_iter):",
+  "    g = grad(x)",
+  "    if norm(g) < tol: break",
+  "    x = x - paso * g",
+  "return x"
+];
+const L_INIT = 2, L_LOOP = 3, L_GRAD = 4, L_CHECK = 5, L_UPD = 6, L_RET = 7;
+
+/* ---------- Pasos con explicación ---------- */
+const f4 = v => v.toFixed(4);
+const sci = v => v.toExponential(2);
+const steps = [{ rec: 0, line: L_INIT, t: "Punto de partida x₀ = (0, 0). Todavía no hay gradiente calculado. Definimos f, su gradiente, α = 0.1 y tol = 10⁻⁸." }];
+recs.forEach((r, i) => {
+  steps.push({ rec: i, line: L_LOOP, t: `Iteración k = ${r.k}. Estamos en x = (${f4(r.x[0])}, ${f4(r.x[1])}), el punto marcado en el mapa.` });
+  steps.push({ rec: i, line: L_GRAD, t: `Calculamos el gradiente g = (${f4(r.g[0])}, ${f4(r.g[1])}). La flecha naranja apunta hacia donde f sube más rápido. Como queremos bajar, usamos el sentido contrario: la flecha punteada.` });
+  steps.push({ rec: i, line: L_CHECK, t: r.last
+      ? `‖g‖ = ${sci(r.gn)} es menor que tol = ${sci(TOL)}. La pendiente es prácticamente cero: no hay hacia dónde bajar. Salimos del ciclo.`
+      : `‖g‖ = ${sci(r.gn)} no es menor que tol. Todavía hay pendiente, así que seguimos.` });
+  if (r.last) {
+    steps.push({ rec: i, line: L_RET, end: true, t: `Devolvemos x* = (${f4(r.x[0])}, ${f4(r.x[1])}) con f(x*) = ${sci(r.f)}. El gradiente se anuló justo en el mínimo.` });
+  } else {
+    const nx = recs[i+1].x;
+    steps.push({ rec: i, line: L_UPD, t: `Usamos el gradiente para moverlo: x ← x − α·g. La flecha azul es ese paso. Cada componente se actualiza por separado (ver el cálculo abajo).` });
+  }
+});
+
+/* ---------- Elementos ---------- */
+const $ = id => document.getElementById(id);
+const codeEl = $('code');
+CODE.forEach((t, i) => {
+  const s = document.createElement('span'); s.className = 'ln';
+  const n = document.createElement('span'); n.className = 'n'; n.textContent = i + 1;
+  s.append(n, document.createTextNode(t));
+  codeEl.append(s);
+});
+const lines = [...codeEl.querySelectorAll('.ln')];
+const slider = $('slider');
+slider.max = steps.length - 1;
+
+let cur = 0, timer = null;
+
+function col(name){ return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
+
+function prep(c){
+  const d = window.devicePixelRatio || 1;
+  const b = c.getBoundingClientRect();
+  c.width = Math.round(b.width * d); c.height = Math.round(b.height * d);
+  const g = c.getContext('2d');
+  g.setTransform(d, 0, 0, d, 0, 0);
+  g.clearRect(0, 0, b.width, b.height);
+  return { g, w: b.width, h: b.height };
+}
+
+function axes(g, w, h, P){
+  const m = { l: 40, r: 10, t: 10, b: 24 };
+  const X = v => m.l + (v - P.x0) / (P.x1 - P.x0) * (w - m.l - m.r);
+  const Y = v => h - m.b - (v - P.y0) / (P.y1 - P.y0) * (h - m.t - m.b);
+  g.strokeStyle = col('--line'); g.lineWidth = 1; g.fillStyle = col('--muted');
+  g.font = '11px system-ui, sans-serif';
+  (P.yt || []).forEach(v => {
+    const y = Y(v);
+    g.beginPath(); g.moveTo(m.l, y); g.lineTo(w - m.r, y); g.stroke();
+    g.textAlign = 'right'; g.textBaseline = 'middle';
+    g.fillText(P.yl(v), m.l - 6, y);
+  });
+  (P.xt || []).forEach(v => {
+    g.textAlign = 'center'; g.textBaseline = 'top';
+    g.fillText(String(v), X(v), h - m.b + 6);
+  });
+  return { X, Y, m };
+}
+
+function arrow(g, x0, y0, x1, y1, c, lw, dashed, hs){
+  g.save();
+  g.strokeStyle = c; g.fillStyle = c; g.lineWidth = lw;
+  if (dashed) g.setLineDash([5, 4]);
+  g.beginPath(); g.moveTo(x0, y0); g.lineTo(x1, y1); g.stroke();
+  g.setLineDash([]);
+  if (!dashed) {
+    const a = Math.atan2(y1 - y0, x1 - x0), s = hs || 8;
+    g.beginPath();
+    g.moveTo(x1, y1);
+    g.lineTo(x1 - s*Math.cos(a - 0.45), y1 - s*Math.sin(a - 0.45));
+    g.lineTo(x1 - s*Math.cos(a + 0.45), y1 - s*Math.sin(a + 0.45));
+    g.closePath(); g.fill();
+  }
+  g.restore();
+}
+
+function series(g, X, Y, pts, c){
+  if (!pts.length) return;
+  g.strokeStyle = c; g.lineWidth = 2; g.beginPath();
+  pts.forEach((p, i) => i ? g.lineTo(X(p[0]), Y(p[1])) : g.moveTo(X(p[0]), Y(p[1])));
+  g.stroke();
+  const last = pts[pts.length - 1];
+  g.fillStyle = c; g.beginPath(); g.arc(X(last[0]), Y(last[1]), 3.5, 0, Math.PI*2); g.fill();
+}
+
+function hline(g, x0, x1, y, c){
+  g.save(); g.setLineDash([4, 4]); g.strokeStyle = c; g.lineWidth = 1;
+  g.beginPath(); g.moveTo(x0, y); g.lineTo(x1, y); g.stroke(); g.restore();
+}
+
+/* ---------- Dibujo ---------- */
+function drawA(ri, line){
+  const ac = col('--accent'), ok = col('--ok'), wa = col('--warn'), mu = col('--muted'), fg = col('--fg');
+  const { g, w, h } = prep($('cA'));
+  const P = { x0: -1, x1: 3.5, y0: -3, y1: 1.5, xt: [0,1,2,3], yt: [-3,-2,-1,0,1], yl: v => String(v) };
+  const { X, Y, m } = axes(g, w, h, P);
+
+  g.save();
+  g.beginPath(); g.rect(m.l, m.t, w - m.l - m.r, h - m.t - m.b); g.clip();
+
+  /* curvas de nivel: f es un círculo de radio √c centrado en (2,-1) */
+  g.strokeStyle = mu; g.globalAlpha = 0.35; g.lineWidth = 1;
+  [0.5, 1, 1.5, 2, 2.5].forEach(R => {
+    g.beginPath();
+    g.ellipse(X(2), Y(-1), Math.abs(X(2+R) - X(2)), Math.abs(Y(-1+R) - Y(-1)), 0, 0, Math.PI*2);
+    g.stroke();
+  });
+  g.globalAlpha = 1;
+
+  /* campo de direcciones −∇f en una rejilla */
+  if (line >= L_GRAD) {
+    for (let gx = -0.5; gx <= 3.01; gx += 0.5) {
+      for (let gy = -2.5; gy <= 1.01; gy += 0.5) {
+        const G = gr([gx, gy]), n = Math.hypot(G[0], G[1]);
+        if (n < 1e-9) continue;
+        const L = 13, ux = -G[0]/n, uy = -G[1]/n;
+        const x0 = X(gx), y0 = Y(gy);
+        arrow(g, x0 - ux*L/2, y0 + uy*L/2, x0 + ux*L/2, y0 - uy*L/2, mu, 1, false, 4);
+      }
+    }
+  }
+
+  /* trayectoria previa */
+  const pts = recs.slice(0, ri + 1);
+  g.strokeStyle = ac; g.lineWidth = 1.4; g.globalAlpha = 0.6; g.beginPath();
+  pts.forEach((r, i) => i ? g.lineTo(X(r.x[0]), Y(r.x[1])) : g.moveTo(X(r.x[0]), Y(r.x[1])));
+  g.stroke(); g.globalAlpha = 1;
+
+  const cr = recs[ri];
+  const cx = X(cr.x[0]), cy = Y(cr.x[1]);
+
+  /* gradiente (hacia arriba) y su negativo (hacia abajo), escala 10 px por unidad */
+  if (line >= L_GRAD) {
+    const K = 10;
+    arrow(g, cx, cy, cx + cr.g[0]*K, cy - cr.g[1]*K, wa, 2.2, false, 9);
+    arrow(g, cx, cy, cx - cr.g[0]*K, cy + cr.g[1]*K, wa, 1.6, true);
+  }
+
+  /* paso real Δx = −α·g */
+  if (line >= L_UPD) {
+    const dx = -PASO*cr.g[0], dy = -PASO*cr.g[1];
+    arrow(g, cx, cy, X(cr.x[0] + dx), Y(cr.x[1] + dy), ac, 2.6, false, 9);
+  }
+
+  g.restore();
+
+  /* origen y óptimo */
+  g.fillStyle = mu; g.fillRect(X(0) - 4, Y(0) - 4, 8, 8);
+  g.strokeStyle = ok; g.lineWidth = 2; g.beginPath(); g.arc(X(2), Y(-1), 6, 0, Math.PI*2); g.stroke();
+
+  /* punto actual */
+  g.fillStyle = fg; g.beginPath(); g.arc(cx, cy, 5, 0, Math.PI*2); g.fill();
+  g.strokeStyle = fg; g.lineWidth = 1.5; g.beginPath(); g.arc(cx, cy, 9, 0, Math.PI*2); g.stroke();
+}
+
+function drawB(ri){
+  const ac = col('--accent'), wa = col('--warn'), mu = col('--muted'), fg = col('--fg');
+  const { g, w, h } = prep($('cB'));
+  const P = { x0: -1, x1: 5, y0: 0, y1: 25, xt: [0, 2, 4], yt: [0, 10, 20], yl: v => String(v) };
+  const { X, Y, m } = axes(g, w, h, P);
+  const cr = recs[ri];
+  const c2 = cr.x[1];
+  const F = x1 => (x1-2)**2 + (c2+1)**2;
+
+  g.save();
+  g.beginPath(); g.rect(m.l, m.t, w - m.l - m.r, h - m.t - m.b); g.clip();
+  g.strokeStyle = ac; g.lineWidth = 2; g.beginPath();
+  for (let x1 = -1; x1 <= 5.001; x1 += 0.05) {
+    const px = X(x1), py = Y(F(x1));
+    x1 === -1 ? g.moveTo(px, py) : g.lineTo(px, py);
+  }
+  g.stroke();
+
+  /* tangente con pendiente g₁ */
+  const x1c = cr.x[0], y1c = F(x1c);
+  g.strokeStyle = wa; g.lineWidth = 1.6; g.setLineDash([5,4]); g.beginPath();
+  g.moveTo(X(-1), Y(y1c + cr.g[0]*(-1 - x1c)));
+  g.lineTo(X(5),  Y(y1c + cr.g[0]*(5 - x1c)));
+  g.stroke(); g.setLineDash([]);
+  g.restore();
+
+  g.fillStyle = fg; g.beginPath(); g.arc(X(x1c), Y(y1c), 5, 0, Math.PI*2); g.fill();
+
+  g.fillStyle = wa; g.font = '12px system-ui, sans-serif'; g.textAlign = 'left'; g.textBaseline = 'top';
+  g.fillText(`pendiente g₁ = ${f4(cr.g[0])}`, m.l + 6, m.t + 4);
+  g.fillStyle = mu;
+  g.fillText(`x₁ = ${f4(x1c)}`, m.l + 6, m.t + 20);
+}
+
+function drawD(ri){
+  const ac = col('--accent');
+  const { g, w, h } = prep($('cD'));
+  const P = { x0: 0, x1: Math.max(N, 1), y0: -18, y1: 2,
+              xt: [0, Math.round(N/2), N], yt: [-16, -12, -8, -4, 0], yl: v => '1e' + v };
+  const { X, Y } = axes(g, w, h, P);
+  const lf = r => Math.max(Math.log10(r.f), -18);
+  series(g, X, Y, recs.slice(0, ri + 1).map(r => [r.k, lf(r)]), ac);
+}
+
+function bar(label, val, scale, color){
+  const a = Math.min(Math.abs(val) / scale, 1) * 50;
+  const left = val < 0 ? 50 - a : 50;
+  return `<div class="brow"><span class="bl">${label}</span>` +
+         `<div class="track"><span class="zero"></span>` +
+         `<div class="fill" style="left:${left}%;width:${a}%;background:${color}"></div></div>` +
+         `<span class="bv">${f4(val)}</span></div>`;
+}
+
+function drawBars(ri, line){
+  const cr = recs[ri];
+  const ac = col('--accent'), wa = col('--warn'), ok = col('--ok');
+  let html = bar('g₁', cr.g[0], 5, wa) + bar('g₂', cr.g[1], 5, wa);
+  $('barsScale').textContent = 'Escala de los gradientes: ±5.';
+  if (line >= L_UPD) {
+    const d1 = -PASO*cr.g[0], d2 = -PASO*cr.g[1];
+    html += `<div style="height:10px"></div>` +
+            bar('Δx₁', d1, 0.5, ac) + bar('Δx₂', d2, 0.5, ok);
+    $('barsScale').textContent = 'Escala del gradiente: ±5. Escala del paso: ±0.5.';
+  }
+  $('bars').innerHTML = html;
+}
+
+/* ---------- Render ---------- */
+function render(){
+  const st = steps[cur], r = recs[st.rec];
+  lines.forEach((el, i) => el.classList.toggle('on', i === st.line));
+  $('explain').textContent = st.t;
+
+  $('stats').innerHTML =
+    `<div class="stat hot"><b>iteración k</b><span>${r.k}</span></div>` +
+    `<div class="stat"><b>f(x_k)</b><span>${sci(r.f)}</span></div>` +
+    `<div class="stat"><b>‖g‖</b><span>${sci(r.gn)}</span></div>` +
+    `<div class="stat ${st.end ? 'ok' : ''}"><b>estado</b><span>${st.end ? 'Convergió' : 'En curso'}</span></div>`;
+
+  let calc = '';
+  if (st.line === L_GRAD) {
+    calc = `g = ∇f(x) = (2·(${f4(r.x[0])} − 2), 2·(${f4(r.x[1])} + 1)) = (${f4(r.g[0])}, ${f4(r.g[1])})`;
+  } else if (st.line === L_CHECK) {
+    calc = `‖g‖ = √(${f4(r.g[0])}² + ${f4(r.g[1])}²) = ${sci(r.gn)}`;
+  } else if (st.line === L_UPD && recs[st.rec + 1]) {
+    const nx = recs[st.rec + 1].x;
+    calc = `x₁ ← ${f4(r.x[0])} − 0.1·(${f4(r.g[0])}) = ${f4(nx[0])}<br>` +
+           `x₂ ← ${f4(r.x[1])} − 0.1·(${f4(r.g[1])}) = ${f4(nx[1])}`;
+  } else if (st.end) {
+    calc = `x* = (${f4(r.x[0])}, ${f4(r.x[1])})`;
+  }
+  $('calc').innerHTML = calc || '&nbsp;';
+
+  slider.value = cur;
+  $('counter').textContent = `Paso ${cur + 1} de ${steps.length}`;
+  $('prev').disabled = cur === 0;
+  $('next').disabled = cur === steps.length - 1;
+
+  drawA(st.rec, st.line);
+  drawB(st.rec);
+  drawBars(st.rec, st.line);
+  drawD(st.rec);
+}
+
+function go(s){
+  cur = Math.max(0, Math.min(steps.length - 1, s));
+  render();
+}
+function stop(){
+  clearInterval(timer); timer = null; $('play').textContent = 'Reproducir';
+}
+
+$('next').onclick = () => go(cur + 1);
+$('prev').onclick = () => go(cur - 1);
+$('reset').onclick = () => { stop(); go(0); };
+$('play').onclick = () => {
+  if (timer) { stop(); return; }
+  $('play').textContent = 'Pausar';
+  timer = setInterval(() => {
+    if (cur >= steps.length - 1) { stop(); return; }
+    go(cur + 1);
+  }, 1000);
+};
+slider.addEventListener('input', () => { stop(); go(+slider.value); });
+document.addEventListener('keydown', e => {
+  if (e.target.tagName === 'INPUT' && e.target.type === 'range') return;
+  if (e.key === 'ArrowRight') { e.preventDefault(); stop(); go(cur + 1); }
+  if (e.key === 'ArrowLeft')  { e.preventDefault(); stop(); go(cur - 1); }
+  if (e.key === ' ')          { e.preventDefault(); $('play').click(); }
+});
+window.addEventListener('resize', render);
+
+render();
+</script>
+</body>
+</html>
+
+</body></html>
